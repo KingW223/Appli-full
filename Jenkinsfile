@@ -150,9 +150,13 @@ pipeline {
                     echo "Frontend: $(minikube service frontend-service --url)"
                     echo "Backend: $(minikube service backend-service --url)"
                 '''
+                frontendUrl = sh(script: 'minikube service frontend-service --url', returnStdout: true).trim()
+                backendUrl = sh(script: 'minikube service backend-service --url', returnStdout: true).trim()
+                echo "Frontend: ${frontendUrl}"
+                echo "Backend: ${backendUrl}"
                 emailext(
                     subject: "SUCCÈS Build: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                    body: "Le pipeline a réussi !\nConsultez: ${env.BUILD_URL}",
+                    body: "Le pipeline a réussi!\nConsultez: ${env.BUILD_URL}",
                     to: "naziftelecom2@gmail.com"
                 )
             }
