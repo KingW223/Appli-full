@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: mhd0/express-mongo-react-frontend:latest
+        image: kingwest1/express-mongo-react-frontend:latest
         ports:
         - containerPort: 5173
         env:
