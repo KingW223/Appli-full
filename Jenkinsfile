@@ -149,9 +149,9 @@ pipeline {
                 echo "🎉 DÉPLOIEMENT RÉUSSI !"
                 bat '''
                     echo Frontend URL:
-                    minikube service frontend-service --url
+                    kubectl get service frontend-service -o jsonpath="{.spec.clusterIP}:{.spec.ports[0].port}"
                     echo Backend URL:
-                    minikube service backend-service --url
+                    kubectl get service backend-service -o jsonpath="{.spec.clusterIP}:{.spec.ports[0].port}"
                 '''
                 emailext(
                     subject: "SUCCÈS Build: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
@@ -160,6 +160,7 @@ pipeline {
                 )
             }
         }
+
 
         failure {
             echo "❌ Le déploiement a échoué."
