@@ -90,7 +90,7 @@ pipeline {
                     bat 'kubectl apply -f k8s/mongodb-deployment.yaml'
 
                     echo "⏳ Attente du démarrage de MongoDB..."
-                    // bat 'timeout /t 60 /nobreak'
+                    bat 'timeout /t 30 /nobreak'
 
                     echo "🚀 Déploiement Backend..."
                     bat 'kubectl apply -f k8s/backend-deployment.yaml'
@@ -145,18 +145,16 @@ pipeline {
 
         success {
             script {
+                echo "🎉 DÉPLOIEMENT RÉUSSI !"
                 bat '''
-                    echo "🎉 DÉPLOIEMENT RÉUSSI !"
-                    echo "Frontend: $(minikube service frontend-service --url)"
-                    echo "Backend: $(minikube service backend-service --url)"
+                    echo Frontend URL:
+                    minikube service frontend-service --url
+                    echo Backend URL:
+                    minikube service backend-service --url
                 '''
-                frontendUrl = sh(script: 'minikube service frontend-service --url', returnStdout: true).trim()
-                backendUrl = sh(script: 'minikube service backend-service --url', returnStdout: true).trim()
-                echo "Frontend: ${frontendUrl}"
-                echo "Backend: ${backendUrl}"
                 emailext(
                     subject: "SUCCÈS Build: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                    body: "Le pipeline a réussi!\nConsultez: ${env.BUILD_URL}",
+                    body: "Le pipeline a réussi ! Consultez : ${env.BUILD_URL}",
                     to: "naziftelecom2@gmail.com"
                 )
             }
@@ -166,16 +164,13 @@ pipeline {
             echo "❌ Le déploiement a échoué."
             emailext(
                 subject: "ÉCHEC Build: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: "Le pipeline a échoué.\nDétails: ${env.BUILD_URL}",
+                body: "Le pipeline a échoué. Détails : ${env.BUILD_URL}",
                 to: "naziftelecom2@gmail.com"
             )
         }
 
         cleanup {
-            bat '''
-                docker logout
-                echo "Cleanup completed"
-            '''
+            bat 'docker logout'
         }
     }
 }
