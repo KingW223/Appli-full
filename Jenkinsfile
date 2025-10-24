@@ -152,59 +152,58 @@ stages {
         }
     }
 
-post {
-    always {
-        echo 'Pipeline terminé - vérifiez les logs pour les détails'
-        script {
-            if (currentBuild.result == 'FAILURE') {
-                bat '''
-                    echo "=== Backend Pods ==="
-                    kubectl get pods -l app=backend
-                    echo "=== Frontend Pods ==="
-                    kubectl get pods -l app=frontend
-                    echo "=== MongoDB Pods ==="
-                    kubectl get pods -l app=mongodb
-                    echo "=== Services ==="
-                    kubectl get services
-                '''
+    post {
+        always {
+            echo 'Pipeline terminé - vérifiez les logs pour les détails'
+            script {
+                if (currentBuild.result == 'FAILURE') {
+                    bat '''
+                        echo "=== Backend Pods ==="
+                        kubectl get pods -l app=backend
+                        echo "=== Frontend Pods ==="
+                        kubectl get pods -l app=frontend
+                        echo "=== MongoDB Pods ==="
+                        kubectl get pods -l app=mongodb
+                        echo "=== Services ==="
+                        kubectl get services
+                    '''
+                }
             }
         }
-    }
 
-    success {
-        script {
-            bat '''
-                echo "🎉 DÉPLOIEMENT RÉUSSI !"
-                echo "Frontend: $(minikube service frontend-service --url)"
-                echo "Backend: $(minikube service backend-service --url)"
-            '''
-            frontendUrl = sh(script: 'minikube service frontend-service --url', returnStdout: true).trim()
-            backendUrl = sh(script: 'minikube service backend-service --url', returnStdout: true).trim()
-            echo "Frontend: ${frontendUrl}"
-            echo "Backend: ${backendUrl}"
+        success {
+            script {
+                bat '''
+                    echo "🎉 DÉPLOIEMENT RÉUSSI !"
+                    echo "Frontend: $(minikube service frontend-service --url)"
+                    echo "Backend: $(minikube service backend-service --url)"
+                '''
+                frontendUrl = sh(script: 'minikube service frontend-service --url', returnStdout: true).trim()
+                backendUrl = sh(script: 'minikube service backend-service --url', returnStdout: true).trim()
+                echo "Frontend: ${frontendUrl}"
+                echo "Backend: ${backendUrl}"
+                emailext(
+                    subject: "SUCCÈS Build: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                    body: "Le pipeline a réussi!\nConsultez: ${env.BUILD_URL}",
+                    to: "naziftelecom2@gmail.com"
+                )
+            }
+        }
+
+        failure {
+            echo "❌ Le déploiement a échoué."
             emailext(
-                subject: "SUCCÈS Build: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-                body: "Le pipeline a réussi!\nConsultez: ${env.BUILD_URL}",
+                subject: "ÉCHEC Build: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: "Le pipeline a échoué.\nDétails: ${env.BUILD_URL}",
                 to: "naziftelecom2@gmail.com"
             )
         }
-    }
 
-    failure {
-        echo "❌ Le déploiement a échoué."
-        emailext(
-            subject: "ÉCHEC Build: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-            body: "Le pipeline a échoué.\nDétails: ${env.BUILD_URL}",
-            to: "naziftelecom2@gmail.com"
-        )
-    }
-
-    cleanup {
-        bat '''
-            docker logout
-            echo "Cleanup completed"
-        '''
-    }
+        cleanup {
+            bat '''
+                docker logout
+                echo "Cleanup completed"
+            '''
+        }
 }
-
 }
