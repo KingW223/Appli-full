@@ -22,13 +22,6 @@ spec:
         env:
         - name: MONGO_INITDB_DATABASE
           value: "mydatabase"
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "100m"
-          limits:
-            memory: "512Mi"
-            cpu: "200m"
         volumeMounts:
         - name: mongodb-data
           mountPath: /data/db
@@ -36,6 +29,7 @@ spec:
       - name: mongodb-data
         persistentVolumeClaim:
           claimName: mongodb-pvc
+
 ---
 apiVersion: v1
 kind: Service
@@ -48,6 +42,7 @@ spec:
     - protocol: TCP
       port: 27017
       targetPort: 27017
+
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
