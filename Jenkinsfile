@@ -90,7 +90,7 @@ pipeline {
                     bat 'kubectl apply -f k8s/mongodb-deployment.yaml'
 
                     echo "⏳ Attente du démarrage de MongoDB..."
-                    bat 'timeout /t 30 /nobreak'
+                    //bat 'timeout /t 30 /nobreak'
 
                     echo "🚀 Déploiement Backend..."
                     bat 'kubectl apply -f k8s/backend-deployment.yaml'
