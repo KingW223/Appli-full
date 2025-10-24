@@ -83,27 +83,29 @@ pipeline {
             }
         }
 
-        stage('Deploy to Kubernetes') {
-            steps {
+        stage('Déployer sur Kubernetes') {
+            withEnv(["KUBECONFIG=${env.WORKSPACE}/k8s/config"]) {
                 script {
                     echo "🚀 Déploiement MongoDB..."
+                    
+                    // Appliquer les manifests MongoDB
                     bat 'kubectl apply -f k8s/mongodb-deployment.yaml'
-
-                    echo "⏳ Attente du démarrage de MongoDB..."
-
-                    echo "🚀 Déploiement Backend..."
+        
+                    // Attendre que MongoDB soit prêt (max 60s)
+                    bat 'kubectl wait --for=condition=ready pod -l app=mongodb --timeout=60s'
+                    
+                    echo "✅ MongoDB est prêt"
+        
+                    // Déployer Backend et Frontend
+                    echo "🚀 Déploiement Backend et Frontend..."
                     bat 'kubectl apply -f k8s/backend-deployment.yaml'
-                    bat 'kubectl apply -f k8s/backend-service.yaml'
-
-                    echo "🚀 Déploiement Frontend..."
                     bat 'kubectl apply -f k8s/frontend-deployment.yaml'
-                    bat 'kubectl apply -f k8s/frontend-service.yaml'
-
-                    echo "⏳ Attente des déploiements..."
-                    bat '''
-                        kubectl rollout status deployment/backend-deployment --timeout=300s
-                        kubectl rollout status deployment/frontend-deployment --timeout=300s
-                    '''
+        
+                    // Attendre que les pods backend et frontend soient prêts
+                    bat 'kubectl wait --for=condition=ready pod -l app=backend --timeout=60s'
+                    bat 'kubectl wait --for=condition=ready pod -l app=frontend --timeout=60s'
+        
+                    echo "✅ Backend et Frontend déployés et prêts"
                 }
             }
         }
