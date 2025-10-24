@@ -117,7 +117,7 @@ stages {
             echo "🔍 Vérification simplifiée des services..."
 
             // Vérification des pods
-          bat '''
+            bat '''
                 echo === Vérification des pods ===
                 set RUNNING=0
                 set TOTAL=0
@@ -135,8 +135,7 @@ stages {
                 )
             '''
 
-
-            // Test du backend
+            // Test du backend (port-forward)
             bat '''
                 echo === Test du backend ===
                 start /B kubectl port-forward service/backend-service 5001:5000
@@ -145,13 +144,13 @@ stages {
                 taskkill /IM kubectl.exe /F
             '''
 
-            // Test du frontend
+            // Test du frontend (LoadBalancer)
             bat '''
                 echo === Test du frontend ===
-                for /f "delims=" %%p in ('kubectl get service frontend-service -o jsonpath="{.spec.ports[0].nodePort}"') do set FRONTEND_PORT=%%p
-                for /f "delims=" %%i in ('minikube ip') do set MINIKUBE_IP=%%i
-                echo Frontend URL: http://%MINIKUBE_IP%:%FRONTEND_PORT%
-                curl -s -o NUL -w "HTTP Code: %%{http_code}\\n" "http://%MINIKUBE_IP%:%FRONTEND_PORT%" || echo Frontend en cours de démarrage
+                for /F "delims=" %%i in ('kubectl get svc frontend-service -o jsonpath={.status.loadBalancer.ingress[0].ip}') do set FRONTEND_IP=%%i
+                for /F "delims=" %%p in ('kubectl get svc frontend-service -o jsonpath={.spec.ports[0].port}') do set FRONTEND_PORT=%%p
+                echo Frontend URL: http://%FRONTEND_IP%:%FRONTEND_PORT%
+                curl -s -o NUL -w "HTTP Code: %%{http_code}\\n" "http://%FRONTEND_IP%:%FRONTEND_PORT%" || echo Frontend en cours de démarrage
             '''
         }
     }
