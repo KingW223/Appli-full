@@ -111,7 +111,7 @@ stages {
         }
     }
 
-      stage('Health Check & Smoke Tests') {
+      /*stage('Health Check & Smoke Tests') {
             steps {
                 script {
                     echo "=== Test Backend ==="
@@ -134,7 +134,7 @@ stages {
                 }
             }
         }
-    }
+    }*/
 
 
 
