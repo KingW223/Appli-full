@@ -111,50 +111,51 @@ stages {
         }
     }
 
-  stage('Health Check & Smoke Tests') {
-    steps {
-        script {
-            echo "🔍 Vérification simplifiée des services..."
-
-            // Vérification des pods
-            bat '''
-                echo === Vérification des pods ===
-                set RUNNING=0
-                set TOTAL=0
-                for /F "tokens=3" %%a in ('kubectl get pods --no-headers') do (
-                    set STATUS=%%a
-                    if "%%a"=="Running" set /a RUNNING+=1
-                    set /a TOTAL+=1
-                )
-                echo Pods running: %RUNNING% / %TOTAL%
-                if not "%RUNNING%"=="%TOTAL%" (
-                    echo ❌ Certains pods ne sont pas prêts
-                    exit /b 1
-                ) else (
-                    echo ✅ Tous les pods sont en cours d'exécution
-                )
-            '''
-
-            // Test du backend (port-forward)
-            bat '''
-                echo === Test du backend ===
-                start /B kubectl port-forward service/backend-service 5001:5000
-                timeout /t 5 /nobreak
-                curl -s http://localhost:5001
-                taskkill /IM kubectl.exe /F
-            '''
-
-            // Test du frontend (LoadBalancer)
-            bat '''
-                echo === Test du frontend ===
-                for /F "delims=" %%i in ('kubectl get svc frontend-service -o jsonpath={.status.loadBalancer.ingress[0].ip}') do set FRONTEND_IP=%%i
-                for /F "delims=" %%p in ('kubectl get svc frontend-service -o jsonpath={.spec.ports[0].port}') do set FRONTEND_PORT=%%p
-                echo Frontend URL: http://%FRONTEND_IP%:%FRONTEND_PORT%
-                curl -s -o NUL -w "HTTP Code: %%{http_code}\\n" "http://%FRONTEND_IP%:%FRONTEND_PORT%" || echo Frontend en cours de démarrage
-            '''
+      stage('Health Check & Smoke Tests') {
+        steps {
+            script {
+                echo "🔍 Vérification simplifiée des services..."
+    
+                // Vérification des pods
+                bat '''
+                    echo === Vérification des pods ===
+                    set RUNNING=0
+                    set TOTAL=0
+                    for /F "tokens=3" %%a in ('kubectl get pods --no-headers') do (
+                        set STATUS=%%a
+                        if "%%a"=="Running" set /a RUNNING+=1
+                        set /a TOTAL+=1
+                    )
+                    echo Pods running: %RUNNING% / %TOTAL%
+                    if not "%RUNNING%"=="%TOTAL%" (
+                        echo ❌ Certains pods ne sont pas prêts
+                        exit /b 1
+                    ) else (
+                        echo ✅ Tous les pods sont en cours d'exécution
+                    )
+                '''
+    
+                // Test du backend
+                bat '''
+                    echo === Test du backend ===
+                    start /B kubectl port-forward service/backend-service 5001:5000
+                    timeout /t 5 /nobreak
+                    curl -s http://localhost:5001
+                    taskkill /IM kubectl.exe /F
+                '''
+    
+                // Test du frontend (NodePort)
+                bat '''
+                    echo === Test du frontend ===
+                    for /F "delims=" %%p in ('kubectl get svc frontend-service -o jsonpath="{.spec.ports[0].nodePort}"') do set FRONTEND_PORT=%%p
+                    for /F "delims=" %%i in ('kubectl get nodes -o jsonpath="{.items[0].status.addresses[?(@.type==\"InternalIP\")].address}"') do set NODE_IP=%%i
+                    echo Frontend URL: http://%NODE_IP%:%FRONTEND_PORT%
+                    curl -s -o NUL -w "HTTP Code: %%{http_code}\n" "http://%NODE_IP%:%FRONTEND_PORT%" || echo Frontend en cours de démarrage
+                '''
+            }
         }
     }
-}
+
 
 
     stage('Update Kubernetes Images') {
