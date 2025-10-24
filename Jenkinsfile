@@ -141,9 +141,9 @@ stages {
     stage('Update Kubernetes Images') {
         steps {
             script {
-                bat "kubectl set image deployment/backend-deployment backend=${env.DOCKER_HUB_USER}/${env.BACK_IMAGE}:${BUILD_NUMBER}"
-                bat "kubectl set image deployment/frontend-deployment frontend=${env.DOCKER_HUB_USER}/${env.FRONT_IMAGE}:${BUILD_NUMBER}"
-
+                bat "kubectl set image deployment/backend-deployment backend=${env.DOCKER_HUB_USER}/${env.BACK_IMAGE}:latest"
+                bat "kubectl set image deployment/frontend-deployment frontend=${env.DOCKER_HUB_USER}/${env.FRONT_IMAGE}:latest"
+    
                 bat '''
                     kubectl rollout status deployment/backend-deployment --timeout=300s
                     kubectl rollout status deployment/frontend-deployment --timeout=300s
@@ -151,7 +151,6 @@ stages {
             }
         }
     }
-}
 
 post {
     always {
