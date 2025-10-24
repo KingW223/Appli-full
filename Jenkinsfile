@@ -94,12 +94,10 @@ pipeline {
     
                     echo "🚀 Déploiement Backend..."
                     bat 'kubectl apply -f k8s/backend-deployment.yaml'
-                    bat 'kubectl apply -f k8s/backend-service.yaml'
                     // bat 'timeout /t 20 /nobreak'
     
                     echo "🚀 Déploiement Frontend..."
                     bat 'kubectl apply -f k8s/frontend-deployment.yaml'
-                    bat 'kubectl apply -f k8s/frontend-service.yaml'
     
                     echo "⏳ Attente des déploiements..."
                     bat '''
