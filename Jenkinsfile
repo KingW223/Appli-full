@@ -83,29 +83,29 @@ pipeline {
             }
         }
 
-        stage('Déployer sur Kubernetes') {
-            withEnv(["KUBECONFIG=${env.WORKSPACE}/k8s/config"]) {
+    stage('Deploy to Kubernetes') {
+            steps {
                 script {
                     echo "🚀 Déploiement MongoDB..."
-                    
-                    // Appliquer les manifests MongoDB
                     bat 'kubectl apply -f k8s/mongodb-deployment.yaml'
-        
-                    // Attendre que MongoDB soit prêt (max 60s)
-                    bat 'kubectl wait --for=condition=ready pod -l app=mongodb --timeout=60s'
-                    
-                    echo "✅ MongoDB est prêt"
-        
-                    // Déployer Backend et Frontend
-                    echo "🚀 Déploiement Backend et Frontend..."
+    
+                    echo "⏳ Attente du démarrage de MongoDB..."
+                    // bat 'timeout /t 60 /nobreak'
+    
+                    echo "🚀 Déploiement Backend..."
                     bat 'kubectl apply -f k8s/backend-deployment.yaml'
+                    bat 'kubectl apply -f k8s/backend-service.yaml'
+                    // bat 'timeout /t 20 /nobreak'
+    
+                    echo "🚀 Déploiement Frontend..."
                     bat 'kubectl apply -f k8s/frontend-deployment.yaml'
-        
-                    // Attendre que les pods backend et frontend soient prêts
-                    bat 'kubectl wait --for=condition=ready pod -l app=backend --timeout=60s'
-                    bat 'kubectl wait --for=condition=ready pod -l app=frontend --timeout=60s'
-        
-                    echo "✅ Backend et Frontend déployés et prêts"
+                    bat 'kubectl apply -f k8s/frontend-service.yaml'
+    
+                    echo "⏳ Attente des déploiements..."
+                    bat '''
+                        kubectl rollout status deployment/backend-deployment --timeout=300s
+                        kubectl rollout status deployment/frontend-deployment --timeout=300s
+                    '''
                 }
             }
         }
