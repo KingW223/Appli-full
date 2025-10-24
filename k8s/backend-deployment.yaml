@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: mhd0/express-mongo-react-backend:latest
+        image: kingwest1/express-mongo-react-backend:latest
         ports:
         - containerPort: 5000
         env:
